@@ -2,17 +2,21 @@ package linkkivinkki.app;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import linkkivinkki.dao.Dao;
+import linkkivinkki.domain.Book;
 import linkkivinkki.domain.Item;
 import linkkivinkki.domain.ItemDateComparator;
 import linkkivinkki.domain.ItemTitleComparator;
-import linkkivinkki.domain.Book;
 import linkkivinkki.domain.InternetContent;
 import linkkivinkki.domain.Podcast;
 import linkkivinkki.io.IO;
 import linkkivinkki.io.Color;
+import userInput.Command;
+import viewItems.BookCommand;
+import viewItems.InternetContentCommand;
 
 public class App {
 
@@ -31,7 +35,8 @@ public class App {
     public void start() {
         io.print("App started.");
 
-        LOOP: while (true) {
+        LOOP:
+        while (true) {
             printDivide();
             io.print("MAIN MENU" + "\n");
             io.print("Commands:");
@@ -42,24 +47,24 @@ public class App {
             String input = io.getString();
 
             switch (input) {
-            case "quit":
-            case "q":
-                break LOOP;
-            case "view":
-            case "v":
-                this.view();
-                break;
-            case "add":
-            case "a":
-                this.add();
-                break;
-            case "delete":
-            case "d":
-                this.delete();
-                break;
-            default:
-                io.print(Color.redText("Invalid command."));
-                break;
+                case "quit":
+                case "q":
+                    break LOOP;
+                case "view":
+                case "v":
+                    this.view();
+                    break;
+                case "add":
+                case "a":
+                    this.add();
+                    break;
+                case "delete":
+                case "d":
+                    this.delete();
+                    break;
+                default:
+                    io.print(Color.redText("Invalid command."));
+                    break;
             }
         }
 
@@ -67,7 +72,8 @@ public class App {
     }
 
     public boolean view() {
-        LOOP: while (true) {
+        LOOP:
+        while (true) {
             printDivide();
             io.print("What kind of items do you wish to view?");
 
@@ -137,7 +143,7 @@ public class App {
         String text = "";
 
         int serial = 1;
-        
+
         for (Item item : allItems) {
             text += serial + ". (" + item.getClass().getSimpleName() + ") ";
             text += " " + item.info();
@@ -147,11 +153,11 @@ public class App {
             if (order.equals("date")) {
                 text += " " + item.getCreationDate().toString();
             }
-            text +=  "\n";
+            text += "\n";
         }
         while (true) {
             io.print(text);
-            
+
             io.print("\n" + "Enter an number to view more information about the specified item "
                     + Color.cyanText("return") + " to return to the main menu.");
 
@@ -181,23 +187,12 @@ public class App {
     }
 
     public boolean viewItems(String type) {
-        List<Item> items;
+        HashMap<String, Command> commands = new HashMap<>();
+        commands.put("book", new BookCommand(bookDao));
+        commands.put("internetContent", new InternetContentCommand(icDao));
+        commands.put("podcast", new InternetContentCommand(podcastDao));
 
-        switch (type) {
-        case "book":
-            items = bookDao.findAll();
-            break;
-        case "internetContent":
-            items = icDao.findAll();
-            break;
-        case "podcast":
-            items = podcastDao.findAll();
-            break;
-        default:
-            return false;
-        }
-
-        return viewListOfItems(items, type);
+        return viewListOfItems(commands.get(type).getItems(), type);
     }
 
     public boolean viewListOfItems(List<Item> items, String type) {
@@ -233,17 +228,17 @@ public class App {
         Item item;
 
         switch (type.toLowerCase()) {
-        case "book":
-            item = (Item) bookDao.findOne(id);
-            break;
-        case "internetcontent":
-            item = (Item) icDao.findOne(id);
-            break;
-        case "podcast":
-            item = (Item) podcastDao.findOne(id);
-            break;
-        default:
-            return false;
+            case "book":
+                item = (Item) bookDao.findOne(id);
+                break;
+            case "internetcontent":
+                item = (Item) icDao.findOne(id);
+                break;
+            case "podcast":
+                item = (Item) podcastDao.findOne(id);
+                break;
+            default:
+                return false;
         }
 
         if (item == null) {
@@ -262,19 +257,19 @@ public class App {
             String input = io.getString();
 
             switch (input) {
-            case "return":
-            case "r":
-                return true;
-            case "main":
-            case "m":
-                return false;
-            case "edit":
-            case "e":
-                edit(item);
-                return false;
-            default:
-                io.print(Color.redText("Invalid command." + "\n"));
-                break;
+                case "return":
+                case "r":
+                    return true;
+                case "main":
+                case "m":
+                    return false;
+                case "edit":
+                case "e":
+                    edit(item);
+                    return false;
+                default:
+                    io.print(Color.redText("Invalid command." + "\n"));
+                    break;
             }
         }
     }
@@ -283,7 +278,7 @@ public class App {
         printDivide();
         io.print(
                 "Insert the new information you want for this item. Leave fields blank if you do not wish to change them."
-                        + "\n");
+                + "\n");
 
         String name = "";
         String title = "";
@@ -362,7 +357,8 @@ public class App {
     public boolean add() {
         boolean success = false;
 
-        LOOP: while (true) {
+        LOOP:
+        while (true) {
             printDivide();
             io.print("What kind of item do you wish to add?");
 
@@ -372,30 +368,30 @@ public class App {
             String input = io.getString();
 
             switch (input) {
-            case "return":
-            case "r":
-                break LOOP;
-            case "book":
-            case "b":
-                printDivide();
-                Book newBook = io.newBook();
-                success = bookDao.add(newBook);
-                break LOOP;
-            case "internetcontent":
-            case "i":
-                printDivide();
-                InternetContent newInternetContent = io.newInternetContent();
-                success = icDao.add(newInternetContent);
-                break LOOP;
-            case "podcast":
-            case "p":
-                printDivide();
-                Podcast newPodcast = io.newPodcast();
-                success = podcastDao.add(newPodcast);
-                break LOOP;
-            default:
-                io.print(Color.redText("Invalid command."));
-                break;
+                case "return":
+                case "r":
+                    break LOOP;
+                case "book":
+                case "b":
+                    printDivide();
+                    Book newBook = io.newBook();
+                    success = bookDao.add(newBook);
+                    break LOOP;
+                case "internetcontent":
+                case "i":
+                    printDivide();
+                    InternetContent newInternetContent = io.newInternetContent();
+                    success = icDao.add(newInternetContent);
+                    break LOOP;
+                case "podcast":
+                case "p":
+                    printDivide();
+                    Podcast newPodcast = io.newPodcast();
+                    success = podcastDao.add(newPodcast);
+                    break LOOP;
+                default:
+                    io.print(Color.redText("Invalid command."));
+                    break;
             }
         }
 
@@ -411,7 +407,8 @@ public class App {
     public boolean delete() {
         boolean success = false;
 
-        LOOP: while (true) {
+        LOOP:
+        while (true) {
             printDivide();
             io.print("What kind of item do you wish to delete?");
             printCategories();
@@ -419,24 +416,24 @@ public class App {
             String input = io.getString();
 
             switch (input) {
-            case "return":
-            case "r":
-                break LOOP;
-            case "book":
-            case "b":
-                success = listForDeletion("book");
-                break LOOP;
-            case "internetcontent":
-            case "i":
-                success = listForDeletion("internetContent");
-                break LOOP;
-            case "podcast":
-            case "p":
-                success = listForDeletion("podcast");
-                break LOOP;
-            default:
-                io.print(Color.redText("Invalid command."));
-                break;
+                case "return":
+                case "r":
+                    break LOOP;
+                case "book":
+                case "b":
+                    success = listForDeletion("book");
+                    break LOOP;
+                case "internetcontent":
+                case "i":
+                    success = listForDeletion("internetContent");
+                    break LOOP;
+                case "podcast":
+                case "p":
+                    success = listForDeletion("podcast");
+                    break LOOP;
+                default:
+                    io.print(Color.redText("Invalid command."));
+                    break;
             }
         }
 
@@ -453,17 +450,17 @@ public class App {
         List<Item> items;
 
         switch (type) {
-        case "book":
-            items = bookDao.findAll();
-            break;
-        case "internetContent":
-            items = icDao.findAll();
-            break;
-        case "podcast":
-            items = podcastDao.findAll();
-            break;
-        default:
-            return false;
+            case "book":
+                items = bookDao.findAll();
+                break;
+            case "internetContent":
+                items = icDao.findAll();
+                break;
+            case "podcast":
+                items = podcastDao.findAll();
+                break;
+            default:
+                return false;
         }
 
         for (Item item : items) {
